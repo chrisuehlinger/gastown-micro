@@ -320,12 +320,24 @@ func tmuxRespawnPane(pane, command string) error {
 
 func tmuxAttachOrSwitch(session string) error {
 	if os.Getenv("TMUX") != "" {
-		return exec.Command("tmux", "switch-client", "-t", session).Run()
+		return runTmuxCommand("switch-client", "-t", session)
 	}
-	return exec.Command("tmux", "attach-session", "-t", session).Run()
+	return runTmuxCommand("attach-session", "-t", session)
 }
 
 func tmuxKillSession(session string) error {
 	cmd := exec.Command("tmux", "kill-session", "-t", session)
 	return cmd.Run()
+}
+
+func runTmuxCommand(args ...string) error {
+	cmd := exec.Command("tmux", args...)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		msg := strings.TrimSpace(string(out))
+		if msg != "" {
+			return fmt.Errorf("tmux %s: %s", args[0], msg)
+		}
+	}
+	return err
 }
